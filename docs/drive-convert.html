@@ -1,31 +1,34 @@
-<div class="results"></div> 
-
 <script>
-var $_GET = {};
+var JSONURL = 'https://spreadsheets.google.com/feeds/list/1mWiOfsKava0VaDfee2l6QbKMINkjduX9LnEUKXQvuDI/1/public/basic?alt=json';
 
-document.location.search.replace(/\??(?:([^=]+)=([^&]*)&?)/g, function () {
-    function decode(s) {
-        return decodeURIComponent(s.split("+").join(" "));
+function callback(data){
+    var rows = [];
+    var cells = data.feed.entry;
+    
+    for (var i = 0; i < cells.length; i++){
+        var rowObj = {};
+        rowObj.timestamp = cells[i].title.$t;
+        var rowCols = cells[i].content.$t.split(',');
+        for (var j = 0; j < rowCols.length; j++){
+            var keyVal = rowCols[j].split(':');
+            rowObj[keyVal[0].trim()] = keyVal[1].trim();
+        }
+        rows.push(rowObj);
     }
+    
+    var raw = document.createElement('p');
+    raw.innerText = JSON.stringify(rows);
+    document.body.appendChild(raw);
+}
 
-    $_GET[decode(arguments[1])] = decode(arguments[2]);
+$(document).ready(function(){
+    
+    $.ajax({
+        url:JSONURL,
+        success: function(data){
+            callback(data);
+        }
+    });
+
 });
- 
- // ID of the Google Spreadsheet
- var spreadsheetID = $_GET["id"];
-
- // Make sure it is public or set to Anyone with link can view 
- var url = "https://spreadsheets.google.com/feeds/list/" + spreadsheetID + "/od6/public/values?alt=json";
-
- $.getJSON(url, function(data) {
-
-  var entry = data.feed.entry;
-
-  $(entry).each(function(){
-    // Column names are name, age, etc.
-    $('.results').prepend('<h2>'+this.gsx$name.$t+'</h2><p>'+this.gsx$age.$t+'</p>');
-  });
-
- });
-
 </script>
